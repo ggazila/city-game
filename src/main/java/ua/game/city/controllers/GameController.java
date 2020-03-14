@@ -33,14 +33,14 @@ public class GameController {
     }
 
     @GetMapping("/next")
-    public String processGame(@RequestParam String userWord) {
+    public String processGame(@RequestParam String word) {
         if (city == null) {
             return "Игра ещё не началась!";
         }
-        if (userWord.length() < 1) {
+        if (word.length() < 1) {
             return "Название города слишком маленькое";
         }
-        return nextCity(userWord);
+        return nextCity(word);
     }
 
     @PostMapping("/end")
@@ -49,39 +49,43 @@ public class GameController {
     }
 
     private String nextCity(String userWord) {
+        String userCity = getUserCity(userWord);
+        if (city.equals(userCity)) {
+            return "Вы не угадали, попробуйте еще!";
+        }
         if (userWord.substring(0, 1).equalsIgnoreCase(city.substring(city.length() - 1))) {
-            if (isLetterNotPresent(userWord))
-                return "Система не знает городов на такую букву. Вы выиграли \n" + finishGame();
-            String userCity = getUserCity(userWord);
-            if (city.equals(userCity)) {
-                return "Вы не угадали, попробуйте еще!";
+            if (isLetterPresent(userCity) && findNewCity(userCity)) {
+                city = cities.stream()
+                        .filter(s -> s.substring(0, 1).equalsIgnoreCase(userCity.substring(userCity.length() - 1)))
+                        .findFirst().get();
+                cities.remove(city);
+                return city;
             }
-
-            return findNewCity(userCity);
+            return "Система не знает городов на такую букву. Вы выиграли \n" + finishGame();
         } else {
             return "Вы ввели слово не на ту букву";
         }
     }
 
     private String getUserCity(String userWord) {
-        return cities.stream()
+        String userCity = cities.stream()
                 .filter(s -> s.equalsIgnoreCase(userWord))
                 .findFirst()
                 .orElse(city);
+        cities.remove(userCity);
+        return userCity;
     }
 
-    private String findNewCity(String userCity) {
+    private boolean findNewCity(String userCity) {
         return cities.stream()
-                .filter(s -> s.substring(0, 1).equalsIgnoreCase(userCity.substring(userCity.length() - 1)))
-                .findFirst()
-                .orElse("Система не знает городов на такую букву.");
+                .anyMatch(s -> s.substring(0, 1).equalsIgnoreCase(userCity.substring(userCity.length() - 1)));
     }
 
-    private boolean isLetterNotPresent(String word) {
+    private boolean isLetterPresent(String word) {
         long countCities = cities.stream()
                 .filter(s -> s.substring(0, 1).equalsIgnoreCase(word.substring(word.length() - 1)))
                 .count();
-        return countCities < 1;
+        return countCities > 0;
     }
 
 }

@@ -3,9 +3,9 @@ package ua.game.city.util;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class FileWorker {
 
@@ -13,13 +13,9 @@ public class FileWorker {
 
     public static Set<String> getListOfCities() {
         Set<String> cities = new HashSet<>();
-        String thisLine;
         try {
-            Reader reader = new FileReader(CITIES_LIST);
-            BufferedReader br = new BufferedReader(reader);
-            while ((thisLine = br.readLine()) != null) {
-                cities.add(thisLine);
-            }
+            BufferedReader reader = new BufferedReader(new FileReader(CITIES_LIST));
+            cities = reader.lines().map(String::strip).collect(Collectors.toSet());
         } catch (IOException e) {
             e.printStackTrace();
         }
